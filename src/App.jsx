@@ -139,7 +139,7 @@ function ChatPanel({ profile, onClose, session }) {
 }
 
 function App() {
-  const [session, setSession] = useState(null);
+   const[session, setSession] = useState(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [chatProfile, setChatProfile] = useState(null);
   const [likedIds, setLikedIds] = useState([]);
@@ -163,9 +163,21 @@ function App() {
     async function loadProfiles() {
       if (!supabaseConfigured) return;
       const { data, error } = await supabase.from('profiles').select('id,display_name,age,city,bio,interests,photo_url,created_at').eq('is_visible', true).neq('id', session?.user?.id || '00000000-0000-0000-0000-000000000000').limit(40);
-      if (!error && data?.length) {
-        setProfiles(data.map(p => ({ id:p.id, name:p.display_name || 'TrueBond member', age:p.age || '—', city:p.city || 'Location not set', tagline:p.bio, interests:p.interests || [], photo:p.photo_url, verified:false })));
-      }
+      if (error) {
+  console.error('Error loading profiles:', error.message);
+  setNotice('Could not load member profiles.');
+} else {
+  setProfiles((data || []).map(p => ({
+    id: p.id,
+    name: p.display_name || 'TrueBond member',
+    age: p.age || '—',
+    city: p.city || 'Location not set',
+    tagline: p.bio,
+    interests: p.interests || [],
+    photo: p.photo_url,
+    verified: false
+  })));
+}
       if (session?.user) {
         const { data: own } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
         if (own) setMyProfile({ display_name: own.display_name || '', age: own.age || '', city: own.city || '', bio: own.bio || '', interests: (own.interests || []).join(', '), photo_url: own.photo_url || '' });
